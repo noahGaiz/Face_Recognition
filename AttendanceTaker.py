@@ -4,6 +4,7 @@ import numpy as np
 import face_recognition
 from face_recognition import face_locations
 import os
+from datetime import datetime, time
 
 path = 'Image'
 images = []
@@ -26,6 +27,21 @@ def findEncodings(images):
 
     return encode_list
 
+def markAttendance(name):
+    with open('Attendance.csv','r+') as f:
+        myDataList = f.readlines()
+        nameList = []
+        for line in myDataList:
+            entry = line.split(',')
+            nameList.append(entry[0])
+        if name not in nameList:
+            now = datetime.now()
+            dateTimeString = now.strftime('%H:%M:%S')
+            f.writelines(f'\n{name},{dateTimeString}')
+
+
+
+
 encodeListsKnown = findEncodings(images)
 print('Encoding Complete')
 
@@ -41,33 +57,23 @@ while True:
     for encodeFace,faceLoc in zip(encodeCurrFrame,faceCurrFrame):
         matches = face_recognition.compare_faces(encodeListsKnown,encodeFace)
         faceDis = face_recognition.face_distance(encodeListsKnown,encodeFace)
-        print(faceDis)
+        #print(faceDis)
         matchIndex = np.argmin(faceDis)
 
         if matches[matchIndex]:
             name = classNames[matchIndex].upper()
-            print(name)
+            #print(name)
             y1,x2,y2,x1 = faceLoc
             y1, x2, y2, x1 = y1*4,x2*4,y2*4,x1*4
             cv2.rectangle(img,(x1,y1),(x2,y2),(0,255,0),2)
             cv2.rectangle(img,(x1,y2-35),(x2,y2),(0,255,0),cv2.FILLED)
             cv2.putText(img,name,(x1+6,y2-6),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),2)
+            markAttendance(name)
 
-    cv2.imshow('Webcame',img)
+    cv2.imshow('Webcam',img)
     cv2.waitKey(1)
 
 
-
-# faceLoc = face_recognition.face_locations(imgMJ)[0]
-# encodeMJ = face_recognition.face_encodings(imgMJ)[0]
-# cv2.rectangle(imgMJ,(faceLoc[3],faceLoc[0]),(faceLoc[1],faceLoc[2]),(255,0,255),2)
-#
-# faceLocTest = face_recognition.face_locations(imgTest)[0]
-# encodeTest = face_recognition.face_encodings(imgTest)[0]
-# cv2.rectangle(imgTest,(faceLocTest[3],faceLocTest[0]),(faceLocTest[1],faceLocTest[2]),(255,0,255),2)
-#
-# results = face_recognition.compare_faces([encodeMJ],encodeTest)
-# faceDist = face_recognition.face_distance([encodeMJ],encodeTest)
 
 
 
